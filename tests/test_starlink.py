@@ -201,7 +201,7 @@ exit "${GRPCURL_EXIT-0}"
                 self.assertFalse(self.args_file.exists())
 
     def test_help_and_version_do_not_call_grpcurl(self):
-        for flag, expected in (("--help", "Usage:"), ("--version", "0.0.1")):
+        for flag, expected in (("--help", "Usage:"), ("--version", "0.0.2")):
             with self.subTest(flag=flag):
                 self.args_file.unlink(missing_ok=True)
                 result = self.run_cli(flag, env={"GRPCURL_EXIT": "99"})
@@ -227,7 +227,7 @@ exit "${GRPCURL_EXIT-0}"
         wrapper = ROOT / "get_clients.sh"
         version = self.run_cli("--version", program=wrapper)
         self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertIn("0.0.1", version.stdout)
+        self.assertIn("0.0.2", version.stdout)
         self.assertFalse(self.args_file.exists())
 
         response = '{"wifiGetStatus":{"clients":[{"name":"b"},{"name":"A"}]}}'

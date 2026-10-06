@@ -26,9 +26,7 @@ jobs:
       - name: Install test dependencies on macOS
         if: runner.os == 'macOS'
         run: brew install jq shellcheck
-      - run: make check test
-      - name: Lint shell scripts
-        run: shellcheck bin/starlink get_clients.sh completions/starlink.bash
+      - run: make lint test
       - name: Verify installation and shell completion
         run: |
           stage=$(mktemp -d)
@@ -43,3 +41,88 @@ jobs:
           brew tap vijitsingh97/starlink https://github.com/VijitSingh97/starlink.git
           brew install vijitsingh97/starlink/starlink
           brew test vijitsingh97/starlink/starlink
+
+  debian:
+    name: Build and test Debian packages
+    runs-on: ubuntu-latest
+    container: debian:13-slim
+    steps:
+      - name: Install build tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            binutils ca-certificates curl file git jq make python3 shellcheck zsh
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Build, test, and reproduce packages
+        run: |
+          make lint test packages
+          sha256sum dist/*.deb > /tmp/package-checksums
+          make packages
+          sha256sum -c /tmp/package-checksums
+      - name: Verify package metadata and architectures
+        run: |
+          version=$(cat VERSION)
+          test "$(dpkg-deb -f "dist/starlink_${version}_all.deb" Architecture)" = all
+          dpkg-deb -f "dist/starlink_${version}_all.deb" Depends | grep -F 'grpcurl (>= 1.9.4)'
+          test "$(dpkg-deb -f dist/grpcurl_1.9.4-1_amd64.deb Architecture)" = amd64
+          test "$(dpkg-deb -f dist/grpcurl_1.9.4-1_arm64.deb Architecture)" = arm64
+          mkdir /tmp/grpcurl-amd64 /tmp/grpcurl-arm64
+          dpkg-deb -x dist/grpcurl_1.9.4-1_amd64.deb /tmp/grpcurl-amd64
+          dpkg-deb -x dist/grpcurl_1.9.4-1_arm64.deb /tmp/grpcurl-arm64
+          file /tmp/grpcurl-amd64/usr/bin/grpcurl | grep -E 'x86-64|x86_64'
+          readelf -h /tmp/grpcurl-arm64/usr/bin/grpcurl | grep -E 'Machine:.*AArch64'
+      - name: Install amd64 packages and run tests
+        run: |
+          apt-get install -y ./dist/grpcurl_1.9.4-1_amd64.deb ./dist/starlink_"$(cat VERSION)"_all.deb
+          test "$(starlink --version)" = "starlink $(cat VERSION)"
+          grpcurl -version 2>&1 | grep -E 'grpcurl v?1[.]9[.]4'
+          make test
+
+  arm64-packages:
+    name: Install and run arm64 packages
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ca-certificates curl jq make python3 shellcheck zsh
+      - name: Build and install arm64 packages
+        run: |
+          test "$(dpkg --print-architecture)" = arm64
+          make lint test packages
+          sudo apt-get install -y ./dist/grpcurl_1.9.4-1_arm64.deb ./dist/starlink_"$(cat VERSION)"_all.deb
+      - name: Execute installed commands and mocked tests
+        run: |
+          grpcurl -version 2>&1 | grep -E 'grpcurl v?1[.]9[.]4'
+          test "$(starlink --version)" = "starlink $(cat VERSION)"
+          make test
+
+  apt-install:
+    name: Public APT install (${{ matrix.container }})
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        container: ["ubuntu:22.04", "ubuntu:24.04", "ubuntu:26.04", "debian:12-slim", "debian:13-slim"]
+    container: ${{ matrix.container }}
+    steps:
+      - name: Install prerequisites
+        run: |
+          apt-get update
+          apt-get install -y ca-certificates curl git make python3
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install from the public signed feed
+        run: |
+          install -d -m 0755 /etc/apt/keyrings
+          curl -fsSL https://vijitsingh97.github.io/starlink/starlink.asc \
+            -o /etc/apt/keyrings/starlink.asc
+          chmod 0644 /etc/apt/keyrings/starlink.asc
+          printf 'Types: deb\nURIs: https://vijitsingh97.github.io/starlink/\nSuites: ./\nSigned-By: /etc/apt/keyrings/starlink.asc\n' \
+            > /etc/apt/sources.list.d/starlink.sources
+          apt-get update
+          apt-get install -y starlink
+          test "$(starlink --version)" = "starlink $(cat VERSION)"
+          grpcurl -version 2>&1 | grep -E 'grpcurl v?1[.]9[.]4'
+          make test

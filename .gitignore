@@ -1,2 +1,5 @@
 graphify-out/
 __pycache__/
+/dist/
+/public/
+/pkgtemp/

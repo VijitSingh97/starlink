@@ -21,7 +21,30 @@ On Homebrew versions that require tap trust, run
 installing.
 
 Homebrew installs `grpcurl` and `jq` automatically. The command supports macOS
-and Linux with Bash 3.2 or newer. Homebrew is the supported installation method.
+and Linux with Bash 3.2 or newer.
+
+On Ubuntu 22.04 or newer and Debian 12 or newer, use the signed APT repository:
+
+```sh
+sudo apt update
+sudo apt install ca-certificates curl
+sudo install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://vijitsingh97.github.io/starlink/starlink.asc \
+  | sudo tee /etc/apt/keyrings/starlink.asc >/dev/null
+sudo tee /etc/apt/sources.list.d/starlink.sources >/dev/null <<'EOF'
+Types: deb
+URIs: https://vijitsingh97.github.io/starlink/
+Suites: ./
+Signed-By: /etc/apt/keyrings/starlink.asc
+EOF
+sudo apt update
+sudo apt install starlink
+```
+
+The signing key fingerprint is
+`0CC3 C39C A957 4C9B 1F52 C2E8 A8EB 1080 B99F F3C0`. The key is scoped to this
+repository by `Signed-By`. Packages are available for 64-bit AMD and ARM systems;
+APT installs Bash and `jq` as dependencies and `grpcurl` from the same feed.
 
 ## Usage
 
