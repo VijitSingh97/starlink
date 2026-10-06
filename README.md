@@ -107,17 +107,24 @@ to its configuration and open a new terminal.
 For Bash, in `~/.bashrc` (or the startup file your Bash shell loads):
 
 ```sh
-source "$(brew --prefix)/etc/bash_completion.d/starlink"
+source "$(brew --prefix)/etc/bash_completion.d/starlink"  # Homebrew
+# source /usr/share/bash-completion/completions/starlink # APT
+# source "$HOME/.local/share/bash-completion/completions/starlink" # Source
 ```
 
 For Zsh, in `~/.zshrc`, put the completion directory before your existing
 `compinit` call, or add these lines if completion is not enabled yet:
 
 ```sh
-fpath=("$(brew --prefix)/share/zsh/site-functions" $fpath)
+fpath=("$(brew --prefix)/share/zsh/site-functions" $fpath) # Homebrew
+# fpath=(/usr/share/zsh/vendor-completions $fpath)        # APT
+# fpath=("$HOME/.local/share/zsh/site-functions" $fpath)  # Source
 autoload -Uz compinit
 compinit
 ```
+
+If you use Oh My Zsh, put the `fpath` line before loading it; Oh My Zsh already
+runs `compinit`.
 
 ## Router compatibility
 
