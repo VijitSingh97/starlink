@@ -6,7 +6,7 @@ version=$(cat VERSION)
 rm -rf public
 mkdir public
 cp "dist/starlink_${version}_all.deb" \
-    dist/grpcurl_1.9.4-1_amd64.deb dist/grpcurl_1.9.4-1_arm64.deb public/
+    dist/grpcurl_1.9.4-2_amd64.deb dist/grpcurl_1.9.4-2_arm64.deb public/
 cd public
 gpg --batch --armor --export > starlink.asc
 apt-ftparchive packages . > Packages

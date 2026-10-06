@@ -2,7 +2,7 @@
 # List clients reported by a Starlink router's read-only gRPC status API.
 set -euo pipefail
 
-VERSION="0.0.2"
+VERSION="0.0.3"
 router="${STARLINK_ROUTER:-192.168.1.1:9000}"
 sort_by="hostname"
 json_output=false
