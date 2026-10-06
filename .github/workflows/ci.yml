@@ -53,6 +53,8 @@ jobs:
           apt-get install -y --no-install-recommends \
             binutils ca-certificates curl file git jq make python3 shellcheck zsh
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Trust the container checkout
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Build, test, and reproduce packages
         run: |
           make lint test packages

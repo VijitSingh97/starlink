@@ -58,7 +58,7 @@ else
 fi
 
 for dependency in grpcurl jq; do
-    command -v "$dependency" >/dev/null 2>&1 || die "Missing dependency: $dependency. Install it with Homebrew."
+    command -v "$dependency" >/dev/null 2>&1 || die "Missing dependency: $dependency. Reinstall starlink with Homebrew or APT; see the README."
 done
 
 if ! response=$(grpcurl -plaintext -max-time 10 -d '{"getStatus":{}}' \

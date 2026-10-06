@@ -215,6 +215,7 @@ exit "${GRPCURL_EXIT-0}"
         result = self.run_cli(env={"PATH": isolated_path})
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Missing dependency: jq", result.stderr)
+        self.assertIn("Homebrew or APT", result.stderr)
         self.assertFalse(self.args_file.exists())
 
         self.fake.unlink()
