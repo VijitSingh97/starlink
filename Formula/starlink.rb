@@ -1,8 +1,8 @@
 class Starlink < Formula
   desc "List Starlink router clients with table or JSON output"
   homepage "https://github.com/VijitSingh97/starlink"
-  url "https://github.com/VijitSingh97/starlink/archive/refs/tags/v0.0.2.tar.gz"
-  sha256 "d50af7eed5f8f58dbc5c4a20f3340312e7987d07a7eb9b5cb8efd220eacfe555"
+  url "https://github.com/VijitSingh97/starlink/archive/refs/tags/v0.0.3.tar.gz"
+  sha256 "42ddfb4bb00491e0a60501c2e53ee8e85851abb1d948663d7e0a7035981c2413"
   license "MIT"
 
   depends_on "go" => :build
@@ -10,7 +10,7 @@ class Starlink < Formula
 
   resource "grpcurl" do
     url "https://github.com/VijitSingh97/starlink/releases/download/v0.0.3/grpcurl_1.9.4-2_source.tar.gz"
-    sha256 "430ffe07d2357028357f20e9d0b10e9d9c1e9717d58aae432bf653e55901cd66"
+    sha256 "b703a584dd27403e2624263ebe505595e3cf61b2f3f2f4d26a23fa4904128d6f"
   end
 
   def install
