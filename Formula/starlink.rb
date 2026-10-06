@@ -1,8 +1,8 @@
 class Starlink < Formula
   desc "List Starlink router clients with table or JSON output"
   homepage "https://github.com/VijitSingh97/starlink"
-  url "https://github.com/VijitSingh97/starlink/archive/refs/tags/v0.0.1.tar.gz"
-  sha256 "a455d8b02863ac7c471e2ae46df437aa276b7743c32aaaaed1ebd04ee3755fde"
+  url "https://github.com/VijitSingh97/starlink/archive/refs/tags/v0.0.2.tar.gz"
+  sha256 "d50af7eed5f8f58dbc5c4a20f3340312e7987d07a7eb9b5cb8efd220eacfe555"
   license "MIT"
 
   depends_on "grpcurl"
@@ -15,7 +15,7 @@ class Starlink < Formula
   end
 
   test do
-    assert_match "starlink 0.0.1", shell_output("#{bin}/starlink --version")
+    assert_match "starlink 0.0.2", shell_output("#{bin}/starlink --version")
     assert_match "List Starlink router clients", shell_output("#{bin}/starlink --help")
 
     (testpath/"grpcurl").write <<~SH
