@@ -16,6 +16,10 @@ brew tap vijitsingh97/starlink https://github.com/VijitSingh97/starlink.git
 brew install vijitsingh97/starlink/starlink
 ```
 
+On Homebrew versions that require tap trust, run
+`brew trust --formula vijitsingh97/starlink/starlink` after tapping and before
+installing.
+
 Homebrew installs `grpcurl` and `jq` automatically. The command supports macOS
 and Linux with Bash 3.2 or newer. Homebrew is the supported installation method.
 
