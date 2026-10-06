@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: CLI tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install test dependencies on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq shellcheck zsh
+      - name: Install test dependencies on macOS
+        if: runner.os == 'macOS'
+        run: brew install jq shellcheck
+      - run: make check test
+      - name: Lint shell scripts
+        run: shellcheck bin/starlink get_clients.sh completions/starlink.bash
+      - name: Verify installation and shell completion
+        run: |
+          stage=$(mktemp -d)
+          make install DESTDIR="$stage" PREFIX=/usr
+          test "$("$stage/usr/bin/starlink" --version)" = "starlink $(cat VERSION)"
+          "$stage/usr/bin/starlink" --help
+          bash -c 'source "$1"; complete -p starlink' -- "$stage/usr/share/bash-completion/completions/starlink"
+          zsh -fc 'fpath=("$1" $fpath); autoload -Uz compinit; compinit -D -i; [[ ${_comps[starlink]} == _starlink ]]' -- "$stage/usr/share/zsh/site-functions"
+      - name: Smoke-test public Homebrew installation
+        if: github.event_name == 'workflow_dispatch' && runner.os == 'macOS' && hashFiles('Formula/starlink.rb') != ''
+        run: |
+          brew tap vijitsingh97/starlink https://github.com/VijitSingh97/starlink.git
+          brew install vijitsingh97/starlink/starlink
+          brew test vijitsingh97/starlink/starlink

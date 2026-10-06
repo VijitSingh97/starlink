@@ -1,0 +1,8 @@
+#compdef starlink
+
+_arguments \
+  '(-s --sort)'{-s,--sort}'[sort clients]:field:(hostname ip)' \
+  '--router[router endpoint]:host and port:' \
+  '--json[print normalized JSON]' \
+  '(-h --help)'{-h,--help}'[show help]' \
+  '(-V --version)'{-V,--version}'[show version]'
