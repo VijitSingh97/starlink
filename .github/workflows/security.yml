@@ -20,7 +20,7 @@ jobs:
   grpcurl:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref || github.sha }}
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -36,9 +36,63 @@ jobs:
           scan_status=0
           for architecture in amd64 arm64; do
             mkdir "$scan_dir/$architecture"
-            dpkg-deb -x "dist/grpcurl_1.9.4-1_${architecture}.deb" \
+            dpkg-deb -x "dist/grpcurl_1.9.4-2_${architecture}.deb" \
               "$scan_dir/$architecture"
             "$(go env GOPATH)/bin/govulncheck" -mode=binary \
               "$scan_dir/$architecture/usr/bin/grpcurl" || scan_status=1
           done
           exit "$scan_status"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: grpcurl-source
+          path: dist/grpcurl_1.9.4-2_source.tar.gz
+          if-no-files-found: error
+
+  homebrew:
+    name: Homebrew build and scan (${{ matrix.os }})
+    needs: grpcurl
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-15-intel, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: grpcurl-source
+          path: dist
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: Install and test the checked-out Homebrew formula
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          git archive --format=tar.gz --prefix="starlink-$(cat VERSION)/" \
+            -o "$RUNNER_TEMP/starlink-$(cat VERSION).tar.gz" HEAD
+          brew tap-new local/starlink-ci
+          CI_FORMULA="$(brew --repository local/starlink-ci)/Formula/starlink.rb"
+          export CI_FORMULA
+          python3 - <<'PYTHON'
+          import hashlib, os, re
+          from pathlib import Path
+          formula = Path("Formula/starlink.rb").read_text()
+          for indent, archive in [("  ", Path(os.environ["RUNNER_TEMP"]) / ("starlink-" + Path("VERSION").read_text().strip() + ".tar.gz")), ("    ", Path("dist/grpcurl_1.9.4-2_source.tar.gz").resolve())]:
+              for field, value in [("url", archive.as_uri()), ("sha256", hashlib.sha256(archive.read_bytes()).hexdigest())]:
+                  formula, count = re.subn(r"(?m)^" + indent + field + r' ".*"$', indent + field + ' "' + value + '"', formula)
+                  assert count == 1, (indent, field, count)
+          Path(os.environ["CI_FORMULA"]).write_text(formula)
+          PYTHON
+          brew trust --formula local/starlink-ci/starlink
+          brew install --build-from-source local/starlink-ci/starlink
+          brew test local/starlink-ci/starlink
+          test "$(starlink --version)" = "starlink $(cat VERSION)"
+      - name: Scan the installed Homebrew client
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.8.0
+          "$(go env GOPATH)/bin/govulncheck" -mode=binary \
+            "$(brew --prefix local/starlink-ci/starlink)/libexec/grpcurl"

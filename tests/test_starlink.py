@@ -201,7 +201,7 @@ exit "${GRPCURL_EXIT-0}"
                 self.assertFalse(self.args_file.exists())
 
     def test_help_and_version_do_not_call_grpcurl(self):
-        for flag, expected in (("--help", "Usage:"), ("--version", "0.0.2")):
+        for flag, expected in (("--help", "Usage:"), ("--version", "0.0.3")):
             with self.subTest(flag=flag):
                 self.args_file.unlink(missing_ok=True)
                 result = self.run_cli(flag, env={"GRPCURL_EXIT": "99"})

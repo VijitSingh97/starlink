@@ -8,7 +8,7 @@ on:
       tag:
         description: Existing version tag to publish
         required: true
-        default: v0.0.2
+        default: v0.0.3
 
 permissions:
   contents: read
@@ -32,9 +32,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: refs/tags/${{ inputs.tag || github.ref_name }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
       - name: Install packaging tools
         run: |
           sudo apt-get update
@@ -46,12 +50,12 @@ jobs:
           test "$RELEASE_TAG" = "v$(cat VERSION)"
           test "$(bin/starlink --version)" = "starlink $(cat VERSION)"
           make lint test packages
-          test "$(dpkg-deb -f dist/grpcurl_1.9.4-1_amd64.deb Architecture)" = amd64
-          test "$(dpkg-deb -f dist/grpcurl_1.9.4-1_arm64.deb Architecture)" = arm64
+          test "$(dpkg-deb -f dist/grpcurl_1.9.4-2_amd64.deb Architecture)" = amd64
+          test "$(dpkg-deb -f dist/grpcurl_1.9.4-2_arm64.deb Architecture)" = arm64
           mkdir /tmp/grpcurl-arm64
-          dpkg-deb -x dist/grpcurl_1.9.4-1_arm64.deb /tmp/grpcurl-arm64
+          dpkg-deb -x dist/grpcurl_1.9.4-2_arm64.deb /tmp/grpcurl-arm64
           readelf -h /tmp/grpcurl-arm64/usr/bin/grpcurl | grep -E 'Machine:.*AArch64'
-          sudo apt-get install -y ./dist/grpcurl_1.9.4-1_amd64.deb ./dist/starlink_"$(cat VERSION)"_all.deb
+          sudo apt-get install -y ./dist/grpcurl_1.9.4-2_amd64.deb ./dist/starlink_"$(cat VERSION)"_all.deb
           grpcurl -version 2>&1 | grep -E 'grpcurl v?1[.]9[.]4'
       - name: Import signing key and build APT feed
         env:
@@ -87,11 +91,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd dist
-          sha256sum ./*.deb > SHA256SUMS
-          gh release create "$RELEASE_TAG" ./*.deb SHA256SUMS --verify-tag \
+          sha256sum ./*.deb grpcurl_1.9.4-2_source.tar.gz > SHA256SUMS
+          gh release create "$RELEASE_TAG" ./*.deb \
+            grpcurl_1.9.4-2_source.tar.gz SHA256SUMS --verify-tag \
             --repo "$GITHUB_REPOSITORY" --title "starlink $RELEASE_TAG" \
-            --notes 'List Starlink router clients on macOS, Ubuntu, and Debian. Includes Homebrew installation and a signed APT feed with grpcurl for amd64 and arm64.'
-      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+            --notes 'Security update: rebuild grpcurl 1.9.4 with Go 1.27.1 and patched crypto dependencies. Homebrew bundles a private client built offline from verified vendored source; the signed APT feed upgrades grpcurl to 1.9.4-2. Linux and macOS clients pass vulnerability scans before publication.'
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: public
 
@@ -105,7 +110,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Deploy signed APT feed
         id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -20,8 +20,8 @@ On Homebrew versions that require tap trust, run
 `brew trust --formula vijitsingh97/starlink/starlink` after tapping and before
 installing.
 
-Homebrew installs `grpcurl` and `jq` automatically. The command supports macOS
-and Linux with Bash 3.2 or newer.
+Homebrew installs `jq` and a bundled `grpcurl` client automatically. The command
+supports macOS and Linux with Bash 3.2 or newer.
 
 On Ubuntu 22.04 or newer and Debian 12 or newer, use the signed APT repository:
 
@@ -152,3 +152,6 @@ Starlink or SpaceX. Licensed under the [MIT License](LICENSE).
 Tests use a fake `grpcurl` in an isolated `PATH`; they never contact a router.
 With `jq` and Python 3 available, run `make check test`. CI also runs ShellCheck
 and verifies installation and completion on macOS and Linux.
+
+APT package builds also require Go, `jq`, and Debian packaging tools. The build
+script uses a pinned Go toolchain and patched dependencies for the bundled client.

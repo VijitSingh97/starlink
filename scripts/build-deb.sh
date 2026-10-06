@@ -17,7 +17,7 @@ Section: net
 Priority: optional
 Architecture: all
 Maintainer: Vijit Singh <VijitSingh97@users.noreply.github.com>
-Depends: bash, jq, grpcurl (>= 1.9.4)
+Depends: bash, jq, grpcurl (>= 1.9.4-2)
 Homepage: https://github.com/VijitSingh97/starlink
 Description: List clients connected to a Starlink router
  A read-only command that prints router clients as a table or normalized JSON.
