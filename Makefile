@@ -17,11 +17,11 @@ test:
 	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests
 
 check:
-	bash -n bin/starlink get_clients.sh completions/starlink.bash
+	bash -n bin/starlink completions/starlink.bash
 	test "$$(bin/starlink --version)" = "starlink $$(cat VERSION)"
 
 lint: check
-	shellcheck bin/starlink get_clients.sh completions/starlink.bash scripts/*.sh
+	shellcheck bin/starlink completions/starlink.bash scripts/*.sh
 
 deb:
 	./scripts/build-deb.sh

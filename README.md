@@ -142,8 +142,7 @@ send client data to an external service.
 ## Project
 
 The original `star-link-hostnames` repository was renamed to `starlink`.
-Existing source checkouts can still use `get_clients.sh`, which forwards to the
-new command. Homebrew installs the `starlink` command.
+Homebrew installs the `starlink` command.
 
 This independent project is not affiliated with, endorsed by, or supported by
 Starlink or SpaceX. Licensed under the [MIT License](LICENSE).
