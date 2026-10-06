@@ -1,0 +1,44 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  grpcurl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+          cache: false
+      - name: Build and scan packaged grpcurl binaries
+        run: |
+          ./scripts/build-grpcurl-debs.sh
+          go install golang.org/x/vuln/cmd/govulncheck@v1.8.0
+          scan_dir=$(mktemp -d)
+          trap 'rm -rf "$scan_dir"' EXIT
+          scan_status=0
+          for architecture in amd64 arm64; do
+            mkdir "$scan_dir/$architecture"
+            dpkg-deb -x "dist/grpcurl_1.9.4-1_${architecture}.deb" \
+              "$scan_dir/$architecture"
+            "$(go env GOPATH)/bin/govulncheck" -mode=binary \
+              "$scan_dir/$architecture/usr/bin/grpcurl" || scan_status=1
+          done
+          exit "$scan_status"

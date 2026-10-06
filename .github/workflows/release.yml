@@ -21,7 +21,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  security:
+    uses: ./.github/workflows/security.yml
+    with:
+      ref: refs/tags/${{ inputs.tag || github.ref_name }}
+
   build:
+    needs: security
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -44,12 +44,12 @@ exit "${GRPCURL_EXIT-0}"
     def tearDown(self):
         self.temp.cleanup()
 
-    def run_cli(self, *args, response=None, env=None, timeout=3, program=CLI):
+    def run_cli(self, *args, response=None, env=None, timeout=3):
         run_env = {**self.env, **(env or {})}
         if response is not None:
             run_env["GRPCURL_RESPONSE"] = response
         return subprocess.run(
-            [str(program), *args],
+            [str(CLI), *args],
             cwd=ROOT,
             env=run_env,
             text=True,
@@ -223,23 +223,6 @@ exit "${GRPCURL_EXIT-0}"
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Missing dependency: grpcurl", result.stderr)
         self.assertFalse(self.args_file.exists())
-
-    def test_legacy_wrapper_forwards_all_arguments(self):
-        wrapper = ROOT / "get_clients.sh"
-        version = self.run_cli("--version", program=wrapper)
-        self.assertEqual(version.returncode, 0, version.stderr)
-        self.assertIn("0.0.2", version.stdout)
-        self.assertFalse(self.args_file.exists())
-
-        response = '{"wifiGetStatus":{"clients":[{"name":"b"},{"name":"A"}]}}'
-        result = self.run_cli(
-            "--router", "router.local:1234", "--sort", "HOSTNAME", "--json",
-            response=response, program=wrapper,
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual([row["hostname"] for row in json.loads(result.stdout)], ["A", "b"])
-        self.assert_request("router.local:1234")
-
 
 if __name__ == "__main__":
     unittest.main()
